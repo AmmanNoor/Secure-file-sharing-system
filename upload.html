@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Secure File Sharing</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+        }
+
+        .container {
+            width: 430px;
+            max-width: 100%;
+
+            background: white;
+            padding: 35px;
+
+            border-radius: 14px;
+
+            box-shadow:
+                0 5px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .file-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+
+            margin-bottom: 15px;
+
+            border: 1px solid #ddd;
+            border-radius: 6px;
+
+            background: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+
+            border: none;
+            border-radius: 7px;
+
+            background: #2563eb;
+            color: white;
+
+            font-size: 15px;
+            font-weight: bold;
+
+            cursor: pointer;
+
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #downloadButton {
+            display: none;
+            background: #16a34a;
+        }
+
+        #downloadButton:hover {
+            background: #15803d;
+        }
+
+        #shareButton {
+            display: none;
+            background: #7c3aed;
+        }
+
+        #shareButton:hover {
+            background: #6d28d9;
+        }
+
+        #result {
+            display: none;
+
+            margin-top: 20px;
+            padding: 12px;
+
+            border-radius: 7px;
+
+            word-break: break-word;
+            line-height: 1.6;
+        }
+
+        .success {
+            display: block !important;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            display: block !important;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .info {
+            display: block !important;
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        #shareResult {
+            margin-top: 10px;
+        }
+
+        .share-box {
+            padding: 15px;
+
+            background: #f3e8ff;
+
+            border-radius: 8px;
+
+            color: #4c1d95;
+        }
+
+        .share-box input {
+            width: 100%;
+
+            padding: 10px;
+            margin: 10px 0;
+
+            border: 1px solid #d8b4fe;
+            border-radius: 6px;
+
+            background: white;
+        }
+
+        .copy-button {
+            background: #7c3aed;
+        }
+
+        .copy-button:hover {
+            background: #6d28d9;
+        }
+
+        .security-info {
+            margin-top: 25px;
+            padding: 15px;
+
+            background: #f8fafc;
+
+            border-radius: 8px;
+
+            font-size: 13px;
+            color: #475569;
+
+            line-height: 1.6;
+        }
+
+        .file-info {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🔐 Secure File Sharing</h1>
+
+    <p class="subtitle">
+        Upload files securely with encryption
+    </p>
+
+
+    <!-- FILE INPUT -->
+
+    <label class="file-label" for="fileInput">
+        Select a file
+    </label>
+
+    <input
+        type="file"
+        id="fileInput"
+    >
+
+    <div id="fileInfo" class="file-info">
+        Maximum file size: 10 MB
+    </div>
+
+
+    <!-- UPLOAD BUTTON -->
+
+    <button
+        id="uploadButton"
+        type="button"
+    >
+        🔒 Upload & Encrypt
+    </button>
+
+
+    <!-- RESULT -->
+
+    <div id="result"></div>
+
+
+    <!-- SECURE DOWNLOAD -->
+
+    <button
+        id="downloadButton"
+        type="button"
+    >
+        🔓 Secure Download
+    </button>
+
+
+    <!-- SHARE -->
+
+    <button
+        id="shareButton"
+        type="button"
+    >
+        🔗 Generate Secure Share Link
+    </button>
+
+
+    <!-- SHARE RESULT -->
+
+    <div id="shareResult"></div>
+
+
+    <!-- SECURITY INFORMATION -->
+
+    <div class="security-info">
+
+        🔐 <strong>Security:</strong>
+
+        <br><br>
+
+        Your file is encrypted using
+        <strong>AES-256-GCM</strong>
+        before it is stored in AWS S3.
+
+        <br><br>
+
+        Files remain encrypted in AWS S3 and are
+        decrypted only when you securely download them.
+
+        <br><br>
+
+        🔗 Secure share links automatically expire
+        after <strong>10 minutes</strong>.
+
+        <br><br>
+
+        ☁️ AWS S3 Server-Side Encryption is also enabled.
+
+    </div>
+
+</div>
+
+
+<script>
+    // API BASE URL
+    const API_BASE_URL = "";
+
+    let uploadedFileKey = "";
+    const fileInput =
+        document.getElementById("fileInput");
+
+    const uploadButton =
+        document.getElementById("uploadButton");
+
+    const downloadButton =
+        document.getElementById("downloadButton");
+
+    const shareButton =
+        document.getElementById("shareButton");
+
+    const result =
+        document.getElementById("result");
+
+    const shareResult =
+        document.getElementById("shareResult");
+
+    const fileInfo =
+        document.getElementById("fileInfo");
+    fileInput.addEventListener("change", function () {
+
+        if (
+            !fileInput.files ||
+            fileInput.files.length === 0
+        ) {
+
+            fileInfo.textContent =
+                "Maximum file size: 10 MB";
+
+            return;
+        }
+
+        const file =
+            fileInput.files[0];
+
+        const sizeMB =
+            file.size / (1024 * 1024);
+
+        fileInfo.textContent =
+            "Selected: " +
+            file.name +
+            " (" +
+            sizeMB.toFixed(2) +
+            " MB)";
+
+        // Reset old upload
+
+        uploadedFileKey = "";
+
+        downloadButton.style.display = "none";
+        shareButton.style.display = "none";
+
+        result.className = "";
+        result.innerHTML = "";
+
+        shareResult.innerHTML = "";
+
+    });
+    uploadButton.addEventListener(
+        "click",
+        uploadFile
+    );
+    downloadButton.addEventListener(
+        "click",
+        secureDownload
+    );
+    shareButton.addEventListener(
+        "click",
+        createShareLink
+    );
+    async function readResponse(response) {
+
+        const text =
+            await response.text();
+
+        if (!text) {
+
+            throw new Error(
+                "Server returned an empty response."
+            );
+        }
+
+        try {
+
+            return JSON.parse(text);
+
+        } catch (error) {
+
+            console.error(
+                "Server response:",
+                text
+            );
+
+            throw new Error(
+                "Server returned an invalid response."
+            );
+        }
+    }
+    async function uploadFile() {
+
+        // Check file
+
+        if (
+            !fileInput.files ||
+            fileInput.files.length === 0
+        ) {
+
+            showError(
+                "❌ Please select a file first."
+            );
+
+            return;
+        }
+
+
+        const file =
+            fileInput.files[0];
+
+
+        // Check size on frontend
+
+        const MAX_SIZE =
+            10 * 1024 * 1024;
+
+        if (file.size > MAX_SIZE) {
+
+            showError(
+                "❌ File is too large. Maximum size is 10 MB."
+            );
+
+            return;
+        }
+
+
+        // Reset
+
+        uploadedFileKey = "";
+
+        downloadButton.style.display =
+            "none";
+
+        shareButton.style.display =
+            "none";
+
+        shareResult.innerHTML =
+            "";
+
+
+        // Disable button
+
+        uploadButton.disabled =
+            true;
+
+        uploadButton.textContent =
+            "⏳ Encrypting & Uploading...";
+
+
+        showInfo(
+            "🔐 Encrypting file and uploading to AWS S3..."
+        );
+
+
+        try {
+            const formData =
+                new FormData();
+
+            formData.append(
+                "file",
+                file
+            );
+
+            const response =
+                await fetch(
+                    API_BASE_URL +
+                    "/api/upload",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
+
+            console.log(
+                "UPLOAD RESPONSE:",
+                data
+            );
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    "Upload failed."
+                );
+            }
+
+            const returnedKey =
+                data.key ||
+                data.fileKey;
+
+
+            if (!returnedKey) {
+
+                throw new Error(
+                    "Upload succeeded but no file key was returned."
+                );
+            }
+            uploadedFileKey =
+                returnedKey;
+
+
+            console.log(
+                "Uploaded file key:",
+                uploadedFileKey
+            );
+
+            showSuccess(
+                "✅ <strong>File uploaded securely!</strong>" +
+                "<br><br>" +
+                "📄 File: " +
+                escapeHtml(
+                    data.filename ||
+                    file.name
+                ) +
+                "<br>" +
+                "🔐 Encryption: AES-256-GCM" +
+                "<br>" +
+                "☁️ Storage: AWS S3"
+            );
+
+
+            // Show buttons
+
+            downloadButton.style.display =
+                "block";
+
+            shareButton.style.display =
+                "block";
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "UPLOAD ERROR:",
+                error
+            );
+
+            showError(
+                "❌ Upload failed: " +
+                escapeHtml(
+                    error.message
+                )
+            );
+
+        }
+
+        finally {
+
+            uploadButton.disabled =
+                false;
+
+            uploadButton.textContent =
+                "🔒 Upload & Encrypt";
+        }
+    }
+    async function secureDownload() {
+
+        if (!uploadedFileKey) {
+
+            showError(
+                "❌ No uploaded file available."
+            );
+
+            return;
+        }
+
+
+        downloadButton.disabled =
+            true;
+
+        downloadButton.textContent =
+            "⏳ Decrypting...";
+
+
+        showInfo(
+            "🔓 Decrypting your file securely..."
+        );
+
+
+        try {
+
+            const encodedKey =
+                encodeURIComponent(
+                    uploadedFileKey
+                );
+
+
+            const response =
+                await fetch(
+                    API_BASE_URL +
+                    "/api/secure-download?key=" +
+                    encodedKey
+                );
+
+
+            // Error response
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                let message =
+                    "Secure download failed.";
+
+                try {
+
+                    const data =
+                        JSON.parse(text);
+
+                    message =
+                        data.message ||
+                        message;
+
+                }
+                catch {
+
+                    if (text) {
+                        message = text;
+                    }
+
+                }
+
+                throw new Error(
+                    message
+                );
+            }
+
+
+            // Get decrypted file
+
+            const blob =
+                await response.blob();
+
+
+            if (
+                !blob ||
+                blob.size === 0
+            ) {
+
+                throw new Error(
+                    "Server returned an empty file."
+                );
+            }
+
+
+            // Create download URL
+
+            const downloadUrl =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            // Create download link
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+            link.href =
+                downloadUrl;
+
+
+            // Get original filename
+
+            const contentDisposition =
+                response.headers.get(
+                    "Content-Disposition"
+                );
+
+
+            let filename =
+                "downloaded-file";
+
+
+            if (contentDisposition) {
+
+                const match =
+                    contentDisposition.match(
+                        /filename="([^"]+)"/
+                    );
+
+                if (match) {
+
+                    filename =
+                        match[1];
+                }
+            }
+
+
+            link.download =
+                filename;
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            link.remove();
+
+
+            // Cleanup
+
+            setTimeout(
+                function () {
+
+                    URL.revokeObjectURL(
+                        downloadUrl
+                    );
+
+                },
+                1000
+            );
+
+
+            showSuccess(
+                "✅ File decrypted and downloaded successfully!"
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "DOWNLOAD ERROR:",
+                error
+            );
+
+            showError(
+                "❌ Secure download failed: " +
+                escapeHtml(
+                    error.message
+                )
+            );
+
+        }
+
+        finally {
+
+            downloadButton.disabled =
+                false;
+
+            downloadButton.textContent =
+                "🔓 Secure Download";
+        }
+    }
+    async function createShareLink() {
+
+        if (!uploadedFileKey) {
+
+            shareResult.innerHTML =
+                '<div class="error">' +
+                "❌ No uploaded file available." +
+                "</div>";
+
+            return;
+        }
+
+
+        shareButton.disabled =
+            true;
+
+        shareButton.textContent =
+            "⏳ Creating secure link...";
+
+
+        shareResult.innerHTML =
+            '<div class="info">' +
+            "🔗 Creating temporary secure link..." +
+            "</div>";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    API_BASE_URL +
+                    "/api/create-share-link",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            key:
+                                uploadedFileKey
+                        })
+                    }
+                );
+
+
+            const data =
+                await readResponse(
+                    response
+                );
+
+
+            console.log(
+                "SHARE RESPONSE:",
+                data
+            );
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    "Could not create share link."
+                );
+            }
+
+
+            if (!data.shareUrl) {
+
+                throw new Error(
+                    "Server did not return a share URL."
+                );
+            }
+
+
+            // Display share link
+
+            shareResult.innerHTML =
+
+                '<div class="share-box">' +
+
+                    '<strong>' +
+                        '🔗 Secure Share Link' +
+                    '</strong>' +
+
+                    '<br><br>' +
+
+                    '<input ' +
+                        'type="text" ' +
+                        'id="shareLinkInput" ' +
+                        'readonly' +
+                    '>' +
+
+                    '<button ' +
+                        'class="copy-button" ' +
+                        'type="button" ' +
+                        'id="copyButton"' +
+                    '>' +
+                        '📋 Copy Link' +
+                    '</button>' +
+
+                    '<p>' +
+                        '⏱️ This link expires in ' +
+                        '<strong>10 minutes</strong>.' +
+                    '</p>' +
+
+                    '<p>' +
+                        '🔐 The file remains encrypted ' +
+                        'in AWS S3.' +
+                    '</p>' +
+
+                '</div>';
+
+
+            // Put URL into input
+
+            const shareInput =
+                document.getElementById(
+                    "shareLinkInput"
+                );
+
+            shareInput.value =
+                data.shareUrl;
+
+
+            // Copy button
+
+            const copyButton =
+                document.getElementById(
+                    "copyButton"
+                );
+
+            copyButton.addEventListener(
+                "click",
+                copyShareLink
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "SHARE LINK ERROR:",
+                error
+            );
+
+            shareResult.innerHTML =
+                '<div class="error">' +
+                '❌ ' +
+                escapeHtml(
+                    error.message
+                ) +
+                '</div>';
+        }
+
+        finally {
+
+            shareButton.disabled =
+                false;
+
+            shareButton.textContent =
+                "🔗 Generate Secure Share Link";
+        }
+    }
+    async function copyShareLink() {
+
+        const input =
+            document.getElementById(
+                "shareLinkInput"
+            );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                input.value
+            );
+
+            alert(
+                "✅ Share link copied!"
+            );
+
+        }
+
+        catch (error) {
+
+            input.select();
+
+            document.execCommand(
+                "copy"
+            );
+
+            alert(
+                "✅ Share link copied!"
+            );
+        }
+    }
+    function showSuccess(message) {
+
+        result.className =
+            "success";
+
+        result.innerHTML =
+            message;
+    }
+    function showError(message) {
+
+        result.className =
+            "error";
+
+        result.innerHTML =
+            message;
+    }
+    function showInfo(message) {
+
+        result.className =
+            "info";
+
+        result.innerHTML =
+            message;
+    }
+    function escapeHtml(value) {
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+</script>
+
+</body>
+</html>
